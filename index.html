@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>CSV Daten anzeigen</title>
+    <style>
+        /* (Deine bestehenden CSS-Styles bleiben unverändert) */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th {
+            cursor: pointer;
+            background-color: #f2f2f2;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th.sort-asc::after {
+            content: " ↑";
+        }
+        th.sort-desc::after {
+            content: " ↓";
+        }
+    </style>
+</head>
+<body>
+
+<h2>CSV Daten anzeigen</h2>
+
+<table id="csvTable">
+    <thead id="csvThead">
+    </thead>
+    <tbody id="csvTbody">
+    </tbody>
+</table>
+
+<script>
+    let sortDirection = {};
+
+    // Funktion zum Parsen der CSV-Daten
+    function parseCSV(data) {
+        const rows = data.trim().split('\n');
+        return rows.map(row => row.split(','));
+    }
+
+    // Funktion zum Erstellen der Tabelle (bleibt unverändert)
+    function buildTable(data) {
+        const thead = document.getElementById('csvThead');
+        const tbody = document.getElementById('csvTbody');
+        thead.innerHTML = '';
+        tbody.innerHTML = '';
+
+        // Tabellenkopf erstellen
+        const headers = data[0];
+        const headerRow = document.createElement('tr');
+        headers.forEach((header, index) => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            th.addEventListener('click', () => sortTableByColumn(index));
+            headerRow.appendChild(th);
+            sortDirection[index] = true; // true für aufsteigend, false für absteigend
+        });
+        thead.appendChild(headerRow);
+
+        // Tabellenkörper erstellen
+        data.slice(1).forEach(rowData => {
+            const row = document.createElement('tr');
+            rowData.forEach(cellData => {
+                const td = document.createElement('td');
+                td.textContent = cellData;
+                row.appendChild(td);
+            });
+            tbody.appendChild(row);
+        });
+    }
+
+    // Funktion zum Sortieren der Tabelle (bleibt unverändert)
+    function sortTableByColumn(columnIndex) {
+        const tbody = document.getElementById('csvTbody');
+        const rowsArray = Array.from(tbody.querySelectorAll('tr'));
+        const thead = document.getElementById('csvThead');
+        const headers = thead.querySelectorAll('th');
+
+        // Entferne Sortierungssymbole von allen Headern
+        headers.forEach((header) => {
+            header.classList.remove('sort-asc', 'sort-desc');
+        });
+
+        // Bestimme die Sortierrichtung
+        sortDirection[columnIndex] = !sortDirection[columnIndex];
+        const direction = sortDirection[columnIndex] ? 1 : -1;
+
+        // Füge das entsprechende Sortierungssymbol hinzu
+        headers[columnIndex].classList.add(sortDirection[columnIndex] ? 'sort-asc' : 'sort-desc');
+
+        // Sortiere die Zeilen
+        rowsArray.sort((a, b) => {
+            const aText = a.children[columnIndex].textContent;
+            const bText = b.children[columnIndex].textContent;
+
+            // Versuche, die Werte als Zahlen zu vergleichen
+            const aNum = parseFloat(aText);
+            const bNum = parseFloat(bText);
+
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                return (aNum - bNum) * direction;
+            } else {
+                return aText.localeCompare(bText, 'de', {numeric: true}) * direction;
+            }
+        });
+
+        // Aktualisiere den Tabellenkörper
+        rowsArray.forEach(row => tbody.appendChild(row));
+    }
+
+    // Funktion zum Laden der CSV-Datei
+    function loadCSVFile() {
+        fetch('./Finale_CSV.csv')
+            .then(response => response.text())
+            .then(data => {
+                const parsedData = parseCSV(data);
+                buildTable(parsedData);
+            })
+            .catch(error => console.error('Fehler beim Laden der CSV-Datei:', error));
+    }
+
+    // Lade die CSV-Datei beim Laden der Seite
+    window.onload = loadCSVFile;
+</script>
+
+</body>
+</html>
