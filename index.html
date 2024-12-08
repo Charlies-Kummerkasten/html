@@ -30,6 +30,8 @@
 
 <h2>CSV Daten anzeigen</h2>
 
+<input type="file" id="csvFileInput" accept=".csv" />
+
 <table id="csvTable">
     <thead id="csvThead">
     </thead>
@@ -39,6 +41,19 @@
 
 <script>
     let sortDirection = {};
+
+    document.getElementById('csvFileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = evt.target.result;
+                const parsedData = parseCSV(data);
+                buildTable(parsedData);
+            };
+            reader.readAsText(file);
+        }
+    });
 
     // Funktion zum Parsen der CSV-Daten
     function parseCSV(data) {
@@ -115,21 +130,8 @@
         // Aktualisiere den Tabellenkörper
         rowsArray.forEach(row => tbody.appendChild(row));
     }
-
-    // Funktion zum Laden der CSV-Datei
-    function loadCSVFile() {
-        fetch('./Finale_CSV.csv')
-            .then(response => response.text())
-            .then(data => {
-                const parsedData = parseCSV(data);
-                buildTable(parsedData);
-            })
-            .catch(error => console.error('Fehler beim Laden der CSV-Datei:', error));
-    }
-
-    // Lade die CSV-Datei beim Laden der Seite
-    window.onload = loadCSVFile;
 </script>
 
 </body>
 </html>
+
